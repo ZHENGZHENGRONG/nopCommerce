@@ -299,7 +299,7 @@ namespace Nop.Web.Controllers
                 .ToList();
 
             //ship to the same address?
-            if (_shippingSettings.ShipToSameAddress && shipToSameAddress && cart.RequiresShipping(_productService, _productAttributeParser))
+            if (_shippingSettings.ShipToSameAddress && shipToSameAddress && cart.RequiresShipping(_productService, _productAttributeParser) && address.Country.AllowsShipping)
             {
                 _workContext.CurrentCustomer.ShippingAddress = _workContext.CurrentCustomer.BillingAddress;
                 _customerService.UpdateCustomer(_workContext.CurrentCustomer);
@@ -1189,6 +1189,9 @@ namespace Nop.Web.Controllers
                     //shipping is required
                     if (_shippingSettings.ShipToSameAddress && model.ShipToSameAddress)
                     {
+                        if (!_workContext.CurrentCustomer.BillingAddress.Country.AllowsShipping)
+                            throw new NopException($"Country '{_workContext.CurrentCustomer.BillingAddress.Country.Name}' is not allowed for shipping");
+
                         //ship to the same address
                         _workContext.CurrentCustomer.ShippingAddress = _workContext.CurrentCustomer.BillingAddress;
                         _customerService.UpdateCustomer(_workContext.CurrentCustomer);
